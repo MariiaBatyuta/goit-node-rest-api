@@ -91,6 +91,8 @@ export const updateStatusContact = async (req, res, next) => {
     const { favorite } = req.body;
 
     try {
+        if(!favorite || typeof favorite !== 'boolean') return res.status(400).send({"message": "Body must be a boolean (true or false). Please, type a correct data"})
+
         const updateStatusContact = await Contact.findByIdAndUpdate(id, { favorite: favorite }, { new: true });
         
         if (!updateStatusContact) return res.status(404).send({ "message": "Not found" });
