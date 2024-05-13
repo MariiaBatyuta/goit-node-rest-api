@@ -45,9 +45,9 @@ export const login = async (req, res, next) => {
 
         const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: 3600 });
 
-        const updatedUser = await User.findByIdAndUpdate(user._id, { token });
+        await User.findByIdAndUpdate(user._id, { token });
 
-        res.status(200).send(updatedUser);
+        res.status(200).send({token});
     } catch (error) {
         next(error);
     }
