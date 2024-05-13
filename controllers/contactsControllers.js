@@ -1,23 +1,35 @@
 import Contact from "../models/contact.js";
 
-import { createContactSchema, updateContactSchema } from "../schemas/contactsSchemas.js";
-
-export const getAllContacts = async (_, res, next) => {
+export const getAllContacts = async (req, res, next) => {
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 20;
+    const filter = {
+        favorite: req.query.favorite === 'true' ? true : req.query.favorite === 'false' ? false : 'true'
+    };
+    
     try {
-        const contacts = await Contact.find();
-        res.status(200).send(contacts)
+        const options = { 
+            page,
+            limit,
+        }
+        const query = { owner: req.user.id, ...filter };
+
+        const contacts = await Contact.paginate(query, options); 
+
+        res.status(200).send(contacts.docs);
     } catch (error) {
         next(error);
     }
 };
 
+
 export const getOneContact = async (req, res, next) => {
     const { id } = req.params;
 
     try {
-        const contact = await Contact.findById(id);
+        const contact = await Contact.findOne({_id: id, owner: req.user.id});
 
-        if (!contact) return res.status(404).send({ "message": "Not found" });
+        if (!contact) return res.status(404).send({ message: "Not found" });
 
         res.status(200).send(contact);
     } catch (error) {
@@ -32,7 +44,9 @@ export const createContact = async (req, res, next) => {
         email: req.body.email,
         phone: req.body.phone,
         favorite: req.body.favorite,
+        owner: req.user.id,
     }
+    
 
     try {
         const { error } = createContactSchema.validate(contact);
@@ -62,6 +76,9 @@ export const updateContact = async (req, res, next) => {
         const { error } = updateContactSchema.validate(contact);
         if (error) return res.status(400).send({ "message": error.message });
 
+        const contactFindOne = await Contact.findOne({ _id: id, owner: req.user.id });
+        if (!contactFindOne) return res.status(404).send({ message: "Not found" });
+
         const updateContact = await Contact.findByIdAndUpdate(id, contact, { new: true });
         
         if (!updateContact) return res.status(404).send({ "message": "Not found" });
@@ -76,7 +93,7 @@ export const deleteContact = async (req, res, next) => {
     const { id } = req.params;
 
     try {
-        const deleteContact = await Contact.findByIdAndDelete(id);
+        const deleteContact = await Contact.findOne({ _id: id, owner: req.user.id });
         
         if (!deleteContact) return res.status(404).send({ "message": "Not found" });
 
@@ -92,6 +109,9 @@ export const updateStatusContact = async (req, res, next) => {
 
     try {
         if(!favorite || typeof favorite !== 'boolean') return res.status(400).send({"message": "Body must be a boolean (true or false). Please, type a correct data"})
+
+        const findOneContact = await Contact.findOne({ _id: id, owner: req.user.id });
+        if (!findOneContact) return res.status(404).send({ message: "Not found" });
 
         const updateStatusContact = await Contact.findByIdAndUpdate(id, { favorite: favorite }, { new: true });
         
