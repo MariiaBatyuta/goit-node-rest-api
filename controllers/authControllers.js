@@ -4,11 +4,13 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
     
 export const register = async (req, res, next) => {
-    const { email, password, subscription, token } = req.body;
-    const emailToLowerCase = email.toLowerCase();
+    const { email, password, subscription } = req.body;
+    if(Object.keys(req.body).length === 0) return res.status(400).send({message: "To register, you must provide all the necessary information about the user."})
 
+    const emailToLowerCase = email.toLowerCase();
+    
     try {
-        const { error } = userRegisterSchema.validate({ email: emailToLowerCase, password, subscription, token });
+        const { error } = userRegisterSchema.validate({ email: emailToLowerCase, password, subscription });
         if (error) return res.status(400).send({ message: error.message });
 
         const user = await User.findOne({ email: emailToLowerCase });
@@ -20,8 +22,7 @@ export const register = async (req, res, next) => {
         const createdUser = await User.create({
             email: emailToLowerCase,
             password: passwordHash,
-            subscription,
-            token
+            subscription
         })
         res.status(201).send(createdUser);
     } catch (error) {
@@ -31,6 +32,8 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
     const { email, password } = req.body;
+    if (Object.keys(req.body).length === 0) return res.status(400).send({ message: "Email or password is wrong" });
+    
     const emailToLowerCase = email.toLowerCase();
 
     try {
@@ -45,9 +48,9 @@ export const login = async (req, res, next) => {
 
         const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: 3600 });
 
-        const updatedUser = await User.findByIdAndUpdate(user._id, { token });
+        await User.findByIdAndUpdate(user._id, { token });
 
-        res.status(200).send(updatedUser);
+        res.status(200).send({token});
     } catch (error) {
         next(error);
     }
