@@ -1,4 +1,5 @@
 import Contact from "../models/contact.js";
+import { createContactSchema, updateContactSchema } from "../schemas/contactsSchemas.js";
 
 export const getAllContacts = async (req, res, next) => {
     const page = req.query.page || 1;

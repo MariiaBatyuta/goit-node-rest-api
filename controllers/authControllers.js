@@ -5,15 +5,13 @@ import jwt from "jsonwebtoken";
     
 export const register = async (req, res, next) => {
     const { email, password, subscription } = req.body;
-    if(Object.keys(req.body).length === 0) return res.status(400).send({message: "To register, you must provide all the necessary information about the user."})
+    if (Object.keys(req.body).length === 0) return res.status(400).send({ message: "To register, you must provide all the necessary information about the user." });
 
-    const emailToLowerCase = email.toLowerCase();
-    
     try {
-        const { error } = userRegisterSchema.validate({ email: emailToLowerCase, password, subscription });
+        const { error } = userRegisterSchema.validate({ email, password, subscription });
         if (error) return res.status(400).send({ message: error.message });
 
-        const user = await User.findOne({ email: emailToLowerCase });
+        const user = await User.findOne({ email: email.toLowerCase() });
 
         if (user !== null) return res.status(409).send({ message: "Email in use" });
 
@@ -34,13 +32,11 @@ export const login = async (req, res, next) => {
     const { email, password } = req.body;
     if (Object.keys(req.body).length === 0) return res.status(400).send({ message: "Email or password is wrong" });
     
-    const emailToLowerCase = email.toLowerCase();
-
     try {
-        const { error } = userLoginSchema.validate({ email: emailToLowerCase, password });
+        const { error } = userLoginSchema.validate({ email, password });
         if (error) return res.status(400).send({ message: error.message });
 
-        const user = await User.findOne({ email: emailToLowerCase });
+        const user = await User.findOne({ email: email.toLowerCase() });
         if (user === null) return res.status(401).send({ message: "Email or password is wrong" });
 
         const passwordMatch = await bcrypt.compare(password, user.password);
