@@ -18,7 +18,7 @@ export const register = async (req, res, next) => {
         const passwordHash = await bcrypt.hash(password, 10);
         
         const createdUser = await User.create({
-            email: emailToLowerCase,
+            email: email.toLowerCase(),
             password: passwordHash,
             subscription
         })
