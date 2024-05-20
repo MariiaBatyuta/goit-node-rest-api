@@ -23,11 +23,11 @@ export async function uploadAvatar(req, res, next) {
 
         await fs.rename(req.file.path, path.resolve("public/avatars", req.file.filename));
 
-        const user = await User.findByIdAndUpdate(req.user.id, { avatarURL: req.file.filename }, { new: true });
+        const user = await User.findByIdAndUpdate(req.user.id, { avatarURL: `/avatars/${req.file.filename}` }, { new: true });
         
         if (!user) res.status(401).send({ message: "Not authorized" });
 
-        res.status(200).sendFile(path.resolve("public/avatars", user.avatarURL));
+        res.status(200).send({ avatarURL: user.avatarURL });
     } catch (error) {
         next(error);
     }
